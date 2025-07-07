@@ -16,8 +16,8 @@ var rootCmd = &cobra.Command{
 	Long: `rsss is a CLI tool that periodically fetches new articles from RSS feeds,
 summarizes them using Gemini, and stores the results.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		dbType, _ := cmd.Flags().GetString("database-type")
-		dsn, _ := cmd.Flags().GetString("database-dsn")
+		dbType, _ := cmd.Flags().GetString("db")
+		dsn, _ := cmd.Flags().GetString("dsn")
 
 		var db database.DB
 		var err error
@@ -57,6 +57,6 @@ func Execute(ctx context.Context) {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("database-type", "sqlite", "Database type (sqlite or mysql)")
-	rootCmd.PersistentFlags().String("database-dsn", "rsss.db", "Database DSN")
+	rootCmd.PersistentFlags().String("db", "sqlite", "Database type (sqlite or mysql)")
+	rootCmd.PersistentFlags().String("dsn", "rsss.db", "Database DSN")
 }
