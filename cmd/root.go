@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
+	"github.com/charmbracelet/fang"
 	"github.com/spf13/cobra"
 )
 
@@ -13,8 +15,8 @@ var rootCmd = &cobra.Command{
 summarizes them using Gemini, and stores the results.`,
 }
 
-func Execute() {
-	err := rootCmd.Execute()
+func Execute(ctx context.Context) {
+	err := fang.Execute(ctx, rootCmd)
 	if err != nil {
 		os.Exit(1)
 	}
