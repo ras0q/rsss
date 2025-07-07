@@ -15,6 +15,10 @@ var summarizeCmd = &cobra.Command{
 	Use:   "summarize",
 	Short: "Summarize new articles from all RSS feeds",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		db, ok := database.FromCtx(cmd.Context())
+		if !ok {
+			return fmt.Errorf("database not found in context")
+		}
 		model, _ := cmd.Flags().GetString("model")
 		prompt, _ := cmd.Flags().GetString("prompt")
 		apiKey := os.Getenv("GEMINI_API_KEY")
@@ -22,13 +26,7 @@ var summarizeCmd = &cobra.Command{
 			return fmt.Errorf("GEMINI_API_KEY environment variable not set")
 		}
 
-		db, err := database.InitDB("rsss.db")
-		if err != nil {
-			return fmt.Errorf("failed to initialize database: %w", err)
-		}
-		defer db.Close()
-
-		feeds, err := database.GetFeeds(db)
+		feeds, err := db.GetFeeds(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("failed to get feeds: %w", err)
 		}
@@ -42,7 +40,7 @@ var summarizeCmd = &cobra.Command{
 			}
 
 			for _, item := range feed.Items {
-				processed, err := database.IsArticleProcessed(db, item.GUID)
+				processed, err := db.IsArticleProcessed(cmd.Context(), item.GUID)
 				if err != nil {
 					log.Printf("Failed to check if article is processed: %v", err)
 					continue
@@ -64,7 +62,7 @@ var summarizeCmd = &cobra.Command{
 
 					fmt.Printf("    Summary: %s\n", summary)
 
-					if err := database.MarkArticleAsProcessed(db, item.GUID); err != nil {
+					if err := db.MarkArticleAsProcessed(cmd.Context(), item.GUID); err != nil {
 						log.Printf("    Failed to mark article as processed: %v", err)
 					}
 				}

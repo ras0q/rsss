@@ -11,13 +11,12 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all RSS feeds",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		db, err := database.InitDB("rsss.db")
-		if err != nil {
-			return fmt.Errorf("failed to initialize database: %w", err)
+		db, ok := database.FromCtx(cmd.Context())
+		if !ok {
+			return fmt.Errorf("database not found in context")
 		}
-		defer db.Close()
 
-		feeds, err := database.GetFeeds(db)
+		feeds, err := db.GetFeeds(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("failed to get feeds: %w", err)
 		}

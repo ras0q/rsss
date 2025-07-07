@@ -1,74 +1,57 @@
 package database
 
 import (
-	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
+	"context"
+
+	"github.com/uptrace/bun"
 )
 
-func InitDB(dataSourceName string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create feeds table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS feeds (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		url TEXT NOT NULL UNIQUE
-	)`)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create processed_articles table
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS processed_articles (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		article_guid TEXT NOT NULL UNIQUE
-	)`)
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+type DB interface {
+	AddFeed(ctx context.Context, url string) error
+	GetFeeds(ctx context.Context) ([]string, error)
+	IsArticleProcessed(ctx context.Context, guid string) (bool, error)
+	MarkArticleAsProcessed(ctx context.Context, guid string) error
+	Close() error
 }
 
-func AddFeed(db *sql.DB, url string) error {
-	_, err := db.Exec("INSERT INTO feeds (url) VALUES (?)", url)
+type bunDB struct {
+	db *bun.DB
+}
+
+func (b *bunDB) AddFeed(ctx context.Context, url string) error {
+	_, err := b.db.NewInsert().Model(&Feed{URL: url}).Exec(ctx)
 	return err
 }
 
-func GetFeeds(db *sql.DB) ([]string, error) {
-	rows, err := db.Query("SELECT url FROM feeds")
-	if err != nil {
+func (b *bunDB) GetFeeds(ctx context.Context) ([]string, error) {
+	var feeds []Feed
+	if err := b.db.NewSelect().Model(&feeds).Scan(ctx); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var urls []string
-	for rows.Next() {
-		var url string
-		if err := rows.Scan(&url); err != nil {
-			return nil, err
-		}
-
-		urls = append(urls, url)
+	urls := make([]string, len(feeds))
+	for i, f := range feeds {
+		urls[i] = f.URL
 	}
 
 	return urls, nil
 }
 
-func IsArticleProcessed(db *sql.DB, guid string) (bool, error) {
-	var exists bool
-
-	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM processed_articles WHERE article_guid = ?)", guid).Scan(&exists)
-	if err != nil && err != sql.ErrNoRows {
+func (b *bunDB) IsArticleProcessed(ctx context.Context, guid string) (bool, error) {
+	exists, err := b.db.NewSelect().Model((*ProcessedArticle)(nil)).Where("article_guid = ?", guid).Exists(ctx)
+	if err != nil {
 		return false, err
 	}
 
 	return exists, nil
 }
 
-func MarkArticleAsProcessed(db *sql.DB, guid string) error {
-	_, err := db.Exec("INSERT INTO processed_articles (article_guid) VALUES (?)", guid)
+func (b *bunDB) MarkArticleAsProcessed(ctx context.Context, guid string) error {
+	_, err := b.db.NewInsert().Model(&ProcessedArticle{ArticleGUID: guid}).Exec(ctx)
 	return err
 }
+
+func (b *bunDB) Close() error {
+	return b.db.Close()
+}
+

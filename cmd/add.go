@@ -12,14 +12,13 @@ var addCmd = &cobra.Command{
 	Short: "Add a new RSS feed",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		db, err := database.InitDB("rsss.db")
-		if err != nil {
-			return fmt.Errorf("failed to initialize database: %w", err)
+		db, ok := database.FromCtx(cmd.Context())
+		if !ok {
+			return fmt.Errorf("database not found in context")
 		}
-		defer db.Close()
 
 		url := args[0]
-		if err := database.AddFeed(db, url); err != nil {
+		if err := db.AddFeed(cmd.Context(), url); err != nil {
 			return fmt.Errorf("failed to add feed: %w", err)
 		}
 
