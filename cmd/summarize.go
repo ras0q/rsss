@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/ras0q/rsss/internal/database"
+	"github.com/ras0q/rsss/internal/rss"
+	"github.com/ras0q/rsss/internal/summarizer"
 	"github.com/spf13/cobra"
-	"rsss/internal/database"
-	"rsss/internal/rss"
-	"rsss/internal/summarizer"
 )
 
 var summarizeCmd = &cobra.Command{

@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ras0q/rsss/internal/database"
 	"github.com/spf13/cobra"
-	"rsss/internal/database"
 )
 
 var addCmd = &cobra.Command{
