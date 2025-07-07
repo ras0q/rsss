@@ -10,6 +10,7 @@ import (
 
 func Summarize(apiKey, modelName, prompt, text string) (string, error) {
 	ctx := context.Background()
+
 	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
 	if err != nil {
 		return "", err
@@ -18,10 +19,10 @@ func Summarize(apiKey, modelName, prompt, text string) (string, error) {
 
 	model := client.GenerativeModel(modelName)
 	fullPrompt := fmt.Sprintf("%s\n\n%s", prompt, text)
+
 	resp, err := model.GenerateContent(ctx, genai.Text(fullPrompt))
 	if err != nil {
 		return "", err
-
 	}
 
 	if len(resp.Candidates) > 0 {

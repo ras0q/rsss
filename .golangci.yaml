@@ -1,0 +1,11 @@
+version: "2"
+
+linters:
+  enable:
+    - wsl_v5
+  settings:
+    errcheck:
+      exclude-functions:
+        - "(*database/sql.DB).Close"
+        - "(*database/sql.Rows).Close"
+        - "(*github.com/google/generative-ai-go/genai.Client).Close"

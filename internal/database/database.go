@@ -50,17 +50,21 @@ func GetFeeds(db *sql.DB) ([]string, error) {
 		if err := rows.Scan(&url); err != nil {
 			return nil, err
 		}
+
 		urls = append(urls, url)
 	}
+
 	return urls, nil
 }
 
 func IsArticleProcessed(db *sql.DB, guid string) (bool, error) {
 	var exists bool
+
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM processed_articles WHERE article_guid = ?)", guid).Scan(&exists)
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
 	}
+
 	return exists, nil
 }
 
